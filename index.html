@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="theme-color" content="#101813">
+  <title>VERDANT — World Architect</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="Verdant inicio"><span class="brand-mark">✳</span><span>VERDANT</span><span class="brand-divider"></span><span class="edition">WORLD ARCHITECT</span></a>
+      <div class="world-title"><span class="live-dot"></span><span id="worldName">LAS ISLAS DE EIRA</span><span class="world-seed">· 08.24.26</span></div>
+      <div class="top-actions"><button class="icon-btn" id="soundBtn" title="Sonido">♫</button><button class="icon-btn" id="helpBtn" title="Ayuda">?</button><button class="save-btn" id="saveBtn"><span>↥</span> Guardar mundo</button></div>
+    </header>
+
+    <section class="world-layout">
+      <aside class="left-rail">
+        <div class="rail-label">MUNDO</div>
+        <button class="rail-btn active" data-panel="overview" title="Visión general"><span>◉</span><i>Visión</i></button>
+        <button class="rail-btn" data-panel="kingdoms" title="Reinos"><span>⚑</span><i>Reinos</i></button>
+        <button class="rail-btn" data-panel="ecosystem" title="Ecosistema"><span>⌁</span><i>Vida</i></button>
+        <div class="rail-spacer"></div>
+        <div class="mini-map-wrap"><div class="mini-title">CARTOGRAFÍA</div><canvas id="minimap" width="132" height="88"></canvas><div class="mini-caption"><span>●</span> Tu mundo</div></div>
+      </aside>
+
+      <section class="game-area">
+        <div class="world-heading">
+          <div><div class="eyebrow">SIMULACIÓN EN VIVO <span class="small-pulse"></span></div><h1>Un mundo, <em>tus reglas.</em></h1></div>
+          <div class="world-controls"><div class="time-control"><button id="pauseBtn" title="Pausar">Ⅱ</button><span class="time-divider"></span><span class="time-label">VELOCIDAD</span><button class="speed-btn active" data-speed="1">1×</button><button class="speed-btn" data-speed="2">2×</button><button class="speed-btn" data-speed="4">4×</button></div><button class="round-btn" id="regenBtn" title="Nuevo mundo">⟳</button></div>
+        </div>
+
+        <div class="game-frame">
+          <div class="canvas-wrap" id="canvasWrap">
+            <canvas id="world" aria-label="Mundo de juego"></canvas>
+            <div class="map-coordinates"><span>◈</span> <b id="cursorCoords">—, —</b></div>
+            <div class="map-legend"><span class="legend-chip"><i class="legend-land"></i> Terreno</span><span class="legend-chip"><i class="legend-border"></i> Fronteras</span></div>
+            <div class="map-zoom"><button id="zoomOut">−</button><span id="zoomReadout">100%</span><button id="zoomIn">+</button><span class="zoom-sep"></span><button id="centerBtn" title="Centrar mapa">⌖</button></div>
+            <div class="toast" id="toast"></div>
+            <div class="intro-tip" id="introTip"><span class="tip-icon">✦</span><span><b>Tu mundo despierta</b><small>Invoca habitantes y observa cómo prosperan.</small></span><button id="dismissTip">×</button></div>
+          </div>
+          <div class="map-footer"><div><span class="footer-dot"></span> Mundo activo <span class="footer-slash">/</span> <span id="seasonText">Primavera, año 1</span></div><div class="map-footer-right"><span>TIERRA <b id="landPercent">—</b></span><span>SEMILLA <b>082426</b></span></div></div>
+        </div>
+
+        <div class="godbar">
+          <div class="tool-heading"><span>PODERES DIVINOS</span><span class="tool-subtitle">Haz realidad tu voluntad</span></div>
+          <div class="tool-list" id="toolList">
+            <button class="tool-btn active" data-tool="inspect" title="Inspeccionar (V)"><span class="tool-icon inspect-icon">⌕</span><span>Mirar</span><kbd>V</kbd></button>
+            <i class="tool-separator"></i>
+            <button class="tool-btn" data-tool="raise" title="Elevar terreno (1)"><span class="tool-icon terrain-icon">⌃</span><span>Elevar</span><kbd>1</kbd></button>
+            <button class="tool-btn" data-tool="lower" title="Hundir terreno (2)"><span class="tool-icon terrain-icon lower-icon">⌄</span><span>Hundir</span><kbd>2</kbd></button>
+            <button class="tool-btn" data-tool="forest" title="Plantar bosque (3)"><span class="tool-icon forest-icon">♣</span><span>Bosque</span><kbd>3</kbd></button>
+            <button class="tool-btn" data-tool="water" title="Crear agua (4)"><span class="tool-icon water-icon">≈</span><span>Agua</span><kbd>4</kbd></button>
+            <i class="tool-separator"></i>
+            <button class="tool-btn" data-tool="villager" title="Invocar aldeano (5)"><span class="tool-icon villager-icon">♟</span><span>Aldeano</span><kbd>5</kbd></button>
+            <button class="tool-btn" data-tool="lightning" title="Rayo (6)"><span class="tool-icon lightning-icon">ϟ</span><span>Rayo</span><kbd>6</kbd></button>
+            <button class="tool-btn" data-tool="bomb" title="Bomba (7)"><span class="tool-icon bomb-icon">✹</span><span>Bomba</span><kbd>7</kbd></button>
+            <button class="tool-btn" data-tool="acid" title="Lluvia ácida (8)"><span class="tool-icon acid-icon">☂</span><span>Lluvia ácida</span><kbd>8</kbd></button>
+          </div>
+          <div class="brush-control"><span class="brush-label">RADIO</span><input id="brushSize" type="range" min="1" max="6" value="2"><span id="brushValue">2</span></div>
+        </div>
+      </section>
+
+      <aside class="right-panel">
+        <div class="panel-top"><span class="eyebrow">ESTADO DEL MUNDO</span><button class="more-btn" id="moreBtn">···</button></div>
+        <div class="population-head"><div><span class="stat-label">POBLACIÓN</span><div class="population-number" id="population">0 <small>almas</small></div></div><div class="pop-orb">♟</div></div>
+        <div class="pop-meter"><span id="popMeter"></span></div>
+        <div class="stat-grid"><div class="stat-card"><span class="stat-label">REINOS</span><b id="kingdomCount">0</b><small><i class="status-dot green"></i> En crecimiento</small></div><div class="stat-card"><span class="stat-label">ALDEAS</span><b id="villageCount">0</b><small><i class="status-dot gold"></i> Establecidas</small></div></div>
+        <div class="panel-divider"></div>
+        <div class="section-heading"><span>REINOS</span><button class="text-action" id="showAll">VER TODOS ↗</button></div>
+        <div class="kingdom-list" id="kingdomList"><div class="empty-state"><span>⚑</span><b>Una historia por escribir</b><small>Invoca aldeanos para fundar el primer reino.</small></div></div>
+        <div class="panel-divider"></div>
+        <div class="section-heading"><span>ECOSISTEMA</span><span class="live-label"><i></i> VIVO</span></div>
+        <div class="eco-row"><span class="eco-icon tree">♣</span><span>Bosques</span><b id="treeCount">0</b><span class="eco-trend">↗</span></div>
+        <div class="eco-row"><span class="eco-icon food">◉</span><span>Alimento</span><b id="foodCount">0</b><span class="eco-trend">↗</span></div>
+        <div class="eco-row"><span class="eco-icon fire">♨</span><span>Incendios</span><b id="fireCount">0</b><span class="eco-trend muted">—</span></div>
+        <div class="panel-divider events-divider"></div>
+        <div class="section-heading"><span>CRÓNICA</span><span class="event-count" id="eventCount">01</span></div>
+        <div class="event-list" id="eventList"></div>
+        <div class="panel-bottom"><span class="sparkle">✦</span> El mundo evoluciona con cada decisión.</div>
+      </aside>
+    </section>
+    <footer class="bottomline"><span>VERDANT <b>0.1.0</b></span><span>UN UNIVERSO EN LA PALMA DE TU MANO <i>✦</i></span><span>HECHO PARA IMAGINAR</span></footer>
+  </main>
+  <div class="modal-backdrop" id="modalBackdrop"><section class="modal"><button class="modal-close" id="modalClose">×</button><div class="modal-mark">✳</div><div class="eyebrow">GUÍA RÁPIDA</div><h2>Un mundo en tus manos.</h2><p>Da forma al paisaje, siembra vida y observa cómo nacen civilizaciones. Cada habitante es autónomo: buscará comida, reunirá recursos y levantará un hogar.</p><div class="help-grid"><div><kbd>1–8</kbd><span>Seleccionar poderes</span></div><div><kbd>Rueda</kbd><span>Zoom del mundo</span></div><div><kbd>Click + arrastrar</kbd><span>Usar poder / mover mapa</span></div><div><kbd>Espacio</kbd><span>Pausar simulación</span></div></div><button class="primary-btn" id="startPlaying">ENTENDIDO, CREADOR <span>→</span></button></section></div>
+  <script src="game.js"></script>
+</body>
+</html>
