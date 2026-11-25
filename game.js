@@ -59,12 +59,12 @@
     document.getElementById('seasonText').textContent=`${seasons[Math.floor((day-1)/90)%4]}, año ${Math.floor((day-1)/360)+1}`;
     const list=document.getElementById('kingdomList');
     if(!kingdoms.length)list.innerHTML='<div class="empty-state"><span>⚑</span><b>Una historia por escribir</b><small>Invoca aldeanos para fundar el primer reino.</small></div>';
-    else list.innerHTML=kingdoms.slice(0,4).map(k=>`<div class="kingdom-item"><i class="kingdom-swatch" style="background:${k.color}"></i><div class="kingdom-info"><b>${k.name}</b><small>${k.villages} aldea${k.villages===1?'':'s'} · ${agents.filter(a=>a.kingdom===k.id).length} habitantes</small></div><span class="kingdom-size">${k.tiles}◈</span></div>`).join('');
+    else list.innerHTML=kingdoms.slice(0,4).map(k=>{const population=agents.filter(a=>a.kingdom===k.id).length;const soldiers=agents.filter(a=>a.kingdom===k.id&&a.soldier).length;return `<div class="kingdom-item"><i class="kingdom-swatch" style="background:${k.color}"></i><div class="kingdom-info"><b>${k.name}${k.atWar?' · ⚔':''}</b><small>${k.villages} aldea${k.villages===1?'':'s'} · ${population} habitantes · ${soldiers} soldados</small></div><span class="kingdom-size">${k.tiles}◈</span></div>`;}).join('');
   }
   function terrainAt(x,y){return at(Math.floor(x),Math.floor(y));}
   function spawnAgent(x,y,kingdom=0){
     let c=at(x,y);if(!c||['deep','shallow','mountain'].includes(c.type)){const p=findLand(x,y,6);if(!p)return null;x=p.x;y=p.y;c=at(x,y);}
-    const a={id:nextAgent++,x:x+.5,y:y+.5,tx:x+.5,ty:y+.5,kingdom,health:100,hunger:rand()*22,age:18+rand()*12,state:'idle',cooldown:0,carrying:0,skin:['#e8b990','#c98e69','#efc9a6'][Math.floor(rand()*3)],shirt:kingdom?kingdomById(kingdom)?.color:'#84916d',gender:rand()<.5?'♀':'♂',walk:rand()*7};
+    const a={id:nextAgent++,x:x+.5,y:y+.5,tx:x+.5,ty:y+.5,kingdom,health:100,hunger:rand()*22,age:18+rand()*12,state:'idle',cooldown:0,carrying:0,soldier:false,skin:['#e8b990','#c98e69','#efc9a6'][Math.floor(rand()*3)],shirt:kingdom?kingdomById(kingdom)?.color:'#84916d',gender:rand()<.5?'♀':'♂',walk:rand()*7};
     agents.push(a);return a;
   }
   function findLand(x,y,radius){for(let r=0;r<=radius;r++)for(let yy=Math.max(0,y-r);yy<=Math.min(ROWS-1,y+r);yy++)for(let xx=Math.max(0,x-r);xx<=Math.min(COLS-1,x+r);xx++){if(Math.max(Math.abs(xx-x),Math.abs(yy-y))!==r)continue;const c=at(xx,yy);if(c&&['grass','forest','sand'].includes(c.type))return{x:xx,y:yy};}return null;}
@@ -72,7 +72,7 @@
   function foundKingdom(x,y,members){
     const id=nextKingdom++,palette=['#c67e63','#728daa','#ab8bb4','#d1a353','#649886'];
     const names=['Brumaverde','Valle de Nácar','Eirwood','Lúmina','Piedralba','Solaria','Monte Claro','Islas de Eira'];
-    const k={id,name:names[(id-1)%names.length],x,y,color:palette[(id-1)%palette.length],villages:1,tiles:0,wood:0,stone:0,food:0};kingdoms.push(k);
+    const k={id,name:names[(id-1)%names.length],x,y,color:palette[(id-1)%palette.length],villages:1,tiles:0,wood:0,stone:0,food:0,soldiers:0,atWar:false,enemyId:null};kingdoms.push(k);
     members.forEach(a=>{a.kingdom=id;a.shirt=k.color;});
     for(let yy=Math.max(0,y-1);yy<=Math.min(ROWS-1,y+1);yy++)for(let xx=Math.max(0,x-1);xx<=Math.min(COLS-1,x+1);xx++){const c=at(xx,yy);if(c&&c.type==='grass'&&!c.house){c.house={kingdom:id};break;}}
     addEvent('⚑',`<b>${k.name}</b> se ha fundado junto a la costa.`);notify(`¡Ha nacido ${k.name}!`);updateWorldStats();
@@ -83,6 +83,7 @@
     if(group.length>=3){const p={x:Math.round(group.reduce((n,a)=>n+a.x,0)/group.length),y:Math.round(group.reduce((n,a)=>n+a.y,0)/group.length)};foundKingdom(Math.floor(p.x),Math.floor(p.y),group);}
   }
   function chooseTarget(a){
+    if(a.soldier&&a.kingdom){const k=kingdomById(a.kingdom),rival=k?.enemyId?kingdomById(k.enemyId):null;if(k?.atWar&&rival)return{x:rival.x+.5,y:rival.y+.5,kind:'war'};}
     const c=terrainAt(a.x,a.y);if(a.hunger>62){let best=null,score=1e9;for(let y=0;y<ROWS;y++)for(let x=0;x<COLS;x++){const t=at(x,y);if(t.food&&distance(a,{x:x+.5,y:y+.5})<score){best={x:x+.5,y:y+.5,kind:'food'};score=distance(a,{x:x+.5,y:y+.5});}}if(best)return best;}
     if(a.kingdom){const k=kingdomById(a.kingdom);if(k){if(k.wood<5){let best=null,score=12;for(let y=1;y<ROWS-1;y++)for(let x=1;x<COLS-1;x++){const t=at(x,y),d=distance(a,{x:x+.5,y:y+.5});if(t.tree&&d<score){best={x:x+.5,y:y+.5,kind:'wood'};score=d;}}if(best)return best;}
       if(k.wood>=4&&!c?.house){const homes=grid.flat().filter(t=>t.house&&t.house.kingdom===k.id).length;if(homes<5&&rand()<.55)return{x:k.x+.5,y:k.y+.5,kind:'build'};}}
@@ -111,6 +112,30 @@
     // Kingdoms claim nearby fertile cells and can clash at overlapping frontiers.
     for(const k of kingdoms){let count=0;for(let y=0;y<ROWS;y++)for(let x=0;x<COLS;x++){const c=at(x,y),d=Math.hypot(x-k.x,y-k.y);if(d<4.2&&c&&!['deep','shallow','mountain'].includes(c.type)){if(!c.owner||c.owner===k.id)c.owner=k.id;if(c.owner===k.id)count++;}}k.tiles=count;}
     foundPendingGroups();
+    updateKingdomWarstate(dt);
+  }
+  function updateKingdomWarstate(dt){
+    if(kingdoms.length<2)return;
+    // Keep declarations from older saves compatible with the explicit rival IDs.
+    for(const k of kingdoms){
+      if(k.atWar&&!k.enemyId){const rival=kingdoms.find(r=>r.id!==k.id&&r.atWar);if(rival){k.enemyId=rival.id;if(!rival.enemyId)rival.enemyId=k.id;}}
+      k.soldiers=agents.filter(a=>a.kingdom===k.id&&a.soldier).length;
+      if(k.soldiers<2&&agents.filter(a=>a.kingdom===k.id&&a.age>=25).length>=4&&rand()<.035){
+        const recruit=agents.find(a=>a.kingdom===k.id&&!a.soldier&&a.age>=25);
+        if(recruit){recruit.soldier=true;recruit.shirt=k.color;k.soldiers++;addEvent('⚔',`<b>${k.name}</b> ha alzado a sus primeros soldados.`);}
+      }
+      if(!k.atWar&&k.tiles>70&&rand()<.002){k.atWar=true;const rivals=kingdoms.filter(r=>r.id!==k.id);const rival=rivals[Math.floor(rand()*rivals.length)];if(rival){k.enemyId=rival.id;rival.atWar=true;rival.enemyId=k.id;addEvent('⚔',`<b>${k.name}</b> y <b>${rival.name}</b> han entrado en guerra.`);notify('Dos reinos han declarado la guerra.');}}
+    }
+    for(const k of kingdoms){if(!k.atWar)continue;const rival=k.enemyId?kingdomById(k.enemyId):null;if(!rival?.atWar)continue;
+      const army=agents.filter(a=>a.kingdom===k.id&&a.soldier), enemies=agents.filter(a=>a.kingdom===rival.id&&a.soldier);
+      for(const soldier of army){
+        const target=enemies.sort((a,b)=>distance(soldier,a)-distance(soldier,b))[0];
+        if(target&&distance(soldier,target)<16){
+          if(distance(soldier,target)<.75){target.health-=dt*.018;soldier.state='combatiendo';target.state='combatiendo';}
+          else{const d=distance(soldier,target);soldier.tx=target.x;soldier.ty=target.y;soldier.state='marchando';}
+        }else{soldier.tx=rival.x+.5;soldier.ty=rival.y+.5;soldier.state='patrullando';}
+      }
+    }
   }
   function spreadFire(){
     const fresh=[];for(let y=0;y<ROWS;y++)for(let x=0;x<COLS;x++){const c=at(x,y);if(c.burning>0){c.burning--;if(c.type==='shallow'||c.type==='deep'){c.burning=0;continue;}if(c.tree&&rand()<.025){c.tree=false;}if(c.burning>0)for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const n=at(x+dx,y+dy);if(n?.tree&&!n.burning&&rand()<.075)n.burning=3+rand()*4;}for(const a of agents)if(Math.hypot(a.x-(x+.5),a.y-(y+.5))<.8)a.health-=15;}}
@@ -224,10 +249,12 @@
   document.getElementById('startPlaying').addEventListener('click',()=>document.getElementById('modalBackdrop').classList.remove('open'));
   document.getElementById('modalBackdrop').addEventListener('click',e=>{if(e.target.id==='modalBackdrop')e.currentTarget.classList.remove('open');});
   document.getElementById('soundBtn').addEventListener('click',()=>notify('El mundo permanece en silencio por ahora.'));
-  document.getElementById('saveBtn').addEventListener('click',()=>{try{localStorage.setItem('verdant-save',JSON.stringify({seed,grid,agents,kingdoms,day,nextAgent,nextKingdom}));notify('Mundo guardado en este dispositivo.');}catch{notify('No se pudo guardar en este navegador.');}});
+  document.getElementById('saveBtn').addEventListener('click',()=>{try{localStorage.setItem('verdant-save',JSON.stringify({seed,grid,agents,kingdoms,day,nextAgent,nextKingdom,tick,paused,speed,events,fires}));notify('Mundo guardado en este dispositivo.');}catch{notify('No se pudo guardar en este navegador.');}});
   document.getElementById('showAll').addEventListener('click',()=>notify(kingdoms.length?`${kingdoms.length} reino${kingdoms.length===1?'':'s'} habitan este mundo.`:'Aún no existen reinos.'));
   window.addEventListener('keydown',e=>{if(e.target.matches('input,textarea'))return;const key=e.key.toLowerCase();const mapping={v:'inspect','1':'raise','2':'lower','3':'forest','4':'water','5':'villager','6':'lightning','7':'bomb','8':'acid'};if(mapping[key])selectTool(mapping[key]);if(e.code==='Space'){e.preventDefault();document.getElementById('pauseBtn').click();}if(key==='escape')document.getElementById('modalBackdrop').classList.remove('open');});
+  // Restore a saved world on a subsequent visit.
+  const restored=(function restoreSave(){try{const raw=localStorage.getItem('verdant-save');if(!raw)return false;const save=JSON.parse(raw);if(!Array.isArray(save.grid)||save.grid.length!==ROWS)return false;seed=save.seed||82426;grid=save.grid;agents=save.agents||[];kingdoms=save.kingdoms||[];day=save.day||1;nextAgent=save.nextAgent||agents.length+1;nextKingdom=save.nextKingdom||kingdoms.length+1;tick=save.tick||0;paused=!!save.paused;speed=save.speed||1;events=save.events||[];fires=save.fires||[];document.querySelectorAll('.speed-btn').forEach(b=>b.classList.toggle('active',Number(b.dataset.speed)===speed));document.getElementById('pauseBtn').textContent=paused?'▶':'Ⅱ';renderEvents();updateWorldStats();notify('Se restauró tu mundo guardado.');return true;}catch{return false;}})();
   window.addEventListener('resize',resize);
   let lastFrame=0;function frame(now){if(now-lastFrame>70){render();lastFrame=now;}requestAnimationFrame(frame);}
-  generateWorld();resize();addEvent('✦','El mundo de <b>Eira</b> aguarda a su creador.');setInterval(simulate,150);requestAnimationFrame(frame);
+  if(!restored){generateWorld();addEvent('✦','El mundo de <b>Eira</b> aguarda a su creador.');}resize();setInterval(simulate,150);requestAnimationFrame(frame);
 })();
